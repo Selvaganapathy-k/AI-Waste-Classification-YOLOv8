@@ -1,1 +1,9 @@
-dataset/
+Dataset/
+
+*.cache
+
+__pycache__/
+
+runs/
+
+*.pt
