@@ -1,306 +1,144 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 import {
-    User,
-    Mail,
-    Lock,
-    UserPlus,
-    Leaf
+  User,
+  Mail,
+  Lock,
+  UserPlus,
+  Leaf,
 } from "lucide-react";
 
-
 import toast from "react-hot-toast";
-
-
 import { registerUser } from "../api/api";
 
+function Register() {
 
+  const navigate = useNavigate();
 
-function Register(){
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  async function handleRegister(e) {
 
-const navigate = useNavigate();
+    e.preventDefault();
 
+    setLoading(true);
 
+    try {
 
-const [username,setUsername]=useState("");
+      await registerUser(
+        username,
+        email,
+        password
+      );
 
-const [email,setEmail]=useState("");
+      toast.success("Registration Successful 🎉");
 
-const [password,setPassword]=useState("");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
 
-const [loading,setLoading]=useState(false);
+    } catch (err) {
 
+      console.log(err);
 
+      toast.error("Registration Failed");
 
+    }
 
+    setLoading(false);
+  }
 
-async function handleRegister(e){
+  return (
+    <div className="login-page">
 
+      <div className="login-card">
 
-e.preventDefault();
+        <div className="brand">
 
+          <div className="logo-circle">
 
-setLoading(true);
+            <Leaf size={45} />
 
+          </div>
 
+          <h1>EcoVision AI</h1>
 
-try{
+          <p>Create your account</p>
 
+        </div>
 
-await registerUser(
+        <form onSubmit={handleRegister}>
 
-    username,
+          <div className="login-input">
 
-    email,
+            <User size={22} />
 
-    password
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
 
-);
+          </div>
 
+          <div className="login-input">
 
+            <Mail size={22} />
 
-toast.success(
-"Registration Successful 🎉"
-);
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
+          </div>
 
+          <div className="login-input">
 
-setTimeout(()=>{
+            <Lock size={22} />
 
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-navigate("/login");
+          </div>
 
+          <button type="submit">
 
-},1500);
+            <UserPlus size={20} />
 
+            {loading ? "Creating Account..." : "Register"}
 
+          </button>
 
+        </form>
+
+        <p className="auth-link">
+
+          Already have an account?
+
+          <span onClick={() => navigate("/login")}>
+            Login
+          </span>
+
+        </p>
+
+      </div>
+
+    </div>
+  );
 }
-
-catch(error){
-
-
-console.log(error);
-
-
-toast.error(
-"Registration Failed"
-);
-
-
-}
-
-
-
-setLoading(false);
-
-
-
-}
-
-
-
-
-return(
-
-
-<div className="login-page">
-
-
-<div className="login-card">
-
-
-
-<div className="brand">
-
-
-<div className="logo-circle">
-
-<Leaf size={45}/>
-
-</div>
-
-
-<h1>
-EcoVision AI
-</h1>
-
-
-<p>
-Create your account
-</p>
-
-
-
-</div>
-
-
-
-
-
-<form onSubmit={handleRegister}>
-
-
-
-
-<div className="login-input">
-
-
-<User size={22}/>
-
-
-<input
-
-type="text"
-
-placeholder="Username"
-
-value={username}
-
-onChange={
-e=>setUsername(e.target.value)
-}
-
-required
-
-/>
-
-
-</div>
-
-
-
-
-
-
-
-<div className="login-input">
-
-
-<Mail size={22}/>
-
-
-<input
-
-type="email"
-
-placeholder="Email"
-
-value={email}
-
-onChange={
-e=>setEmail(e.target.value)
-}
-
-required
-
-/>
-
-
-</div>
-
-
-
-
-
-
-
-<div className="login-input">
-
-
-<Lock size={22}/>
-
-
-<input
-
-type="password"
-
-placeholder="Password"
-
-value={password}
-
-onChange={
-e=>setPassword(e.target.value)
-}
-
-required
-
-/>
-
-
-</div>
-
-
-
-
-
-
-
-<button type="submit">
-
-
-<UserPlus size={22}/>
-
-
-{
-
-loading
-
-?
-
-"Creating..."
-
-:
-
-"Register"
-
-}
-
-
-</button>
-
-
-
-
-
-</form>
-
-
-
-
-<p className="auth-link">
-
-
-Already have account?
-
-
-<span
-
-onClick={()=>navigate("/login")}
-
->
-
-Login
-
-</span>
-
-
-</p>
-
-
-
-</div>
-
-
-</div>
-
-
-)
-
-}
-
 
 export default Register;

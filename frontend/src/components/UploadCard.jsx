@@ -19,24 +19,38 @@ function UploadCard({setResult}){
     const [loading,setLoading] = useState(false);
 
 
+async function handleImage(e) {
 
-    function handleImage(e){
+    const file = e.target.files[0];
 
-        const file = e.target.files[0];
+    if (!file) return;
 
-        setImage(file);
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
 
+    try {
 
-        if(file){
+        setLoading(true);
 
-            setPreview(
-                URL.createObjectURL(file)
-            );
+        const data = await predictWaste(file);
 
-        }
+        console.log(data);
+
+        setResult(data);
+
+    } catch (error) {
+
+        console.log(error);
+
+        alert("Prediction Failed");
+
+    } finally {
+
+        setLoading(false);
 
     }
 
+}
 
 
 
@@ -183,34 +197,6 @@ Ready for Prediction
 
 
 
-
-<button
-
-onClick={handlePredict}
-
-disabled={loading}
-
-className="predict-btn"
-
->
-
-
-{
-
-loading
-
-?
-
-"🤖 Predicting..."
-
-:
-
-"Analyze Waste"
-
-}
-
-
-</button>
 
 
 
