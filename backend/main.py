@@ -9,12 +9,16 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+
 from sqlalchemy.orm import Session
+
 
 from ultralytics import YOLO
 
+
 import os
 import shutil
+
 
 
 from database import (
@@ -23,10 +27,12 @@ from database import (
     get_db
 )
 
+
 from models import (
     User,
     PredictionHistory
 )
+
 
 from security import (
     hash_password,
@@ -34,11 +40,13 @@ from security import (
     create_token
 )
 
+
 from auth import get_current_user
 
 
 
-# Create tables
+
+# Create Tables
 
 Base.metadata.create_all(
     bind=engine
@@ -52,6 +60,7 @@ app = FastAPI(
 
 
 
+
 # CORS
 
 app.add_middleware(
@@ -60,11 +69,11 @@ app.add_middleware(
 
     allow_origins=[
 
-    "https://ai-waste-classification-yol-ov8.vercel.app",
+        "http://localhost:5173",
 
-    "https://ecovision-ai-backend-95u4.onrender.com"
+        "https://ai-waste-classification-yol-ov8.vercel.app"
 
-],
+    ],
 
     allow_credentials=True,
 
@@ -73,6 +82,7 @@ app.add_middleware(
     allow_headers=["*"]
 
 )
+
 
 
 
@@ -99,7 +109,9 @@ app.mount(
 
 
 
-# Load YOLO Model
+
+
+# YOLO Model
 
 model = YOLO(
     "model/waste_classifier.pt"
@@ -112,12 +124,20 @@ print("MODEL LOADED")
 
 
 
+
+
 @app.get("/")
 def home():
 
     return {
-        "message":"EcoVision AI API"
+
+        "message":
+        "EcoVision AI API"
+
     }
+
+
+
 
 
 
@@ -171,7 +191,6 @@ def register(
     )
 
 
-
     db.add(user)
 
     db.commit()
@@ -183,9 +202,12 @@ def register(
     return {
 
         "message":
-        "Registered successfully"
+        "Registration successful"
 
     }
+
+
+
 
 
 
@@ -195,13 +217,15 @@ def register(
 # ================= LOGIN =================
 
 
+@app.post("/login")
+def login(
 
-@app.post("/register")
-def register(
-    username:str,
     email:str,
+
     password:str,
-    db: Session = Depends(get_db)
+
+    db:Session = Depends(get_db)
+
 ):
 
 
@@ -233,13 +257,15 @@ def register(
 
     ):
 
+
         raise HTTPException(
 
             status_code=401,
 
-            detail="Wrong password"
+            detail="Invalid password"
 
         )
+
 
 
 
@@ -255,6 +281,7 @@ def register(
 
     return {
 
+
         "token":token,
 
         "username":user.username,
@@ -269,19 +296,22 @@ def register(
 
 
 
+
+
 # ================= PREDICT =================
+
 
 
 @app.post("/predict")
 async def predict(
 
-    file:UploadFile=File(...),
+    file:UploadFile = File(...),
 
-    current_user=Depends(
+    current_user = Depends(
         get_current_user
     ),
 
-    db:Session=Depends(get_db)
+    db:Session = Depends(get_db)
 
 ):
 
@@ -289,18 +319,18 @@ async def predict(
     try:
 
 
-        path = (
+        file_path = (
             "uploads/"
             +
             file.filename
         )
 
 
-
         with open(
-            path,
+            file_path,
             "wb"
         ) as buffer:
+
 
             shutil.copyfileobj(
 
@@ -314,7 +344,7 @@ async def predict(
 
         result = model.predict(
 
-            path,
+            file_path,
 
             imgsz=320,
 
@@ -338,6 +368,7 @@ async def predict(
 
 
 
+
         history = PredictionHistory(
 
             user_id=current_user.id,
@@ -351,7 +382,6 @@ async def predict(
         )
 
 
-
         db.add(history)
 
         db.commit()
@@ -360,7 +390,8 @@ async def predict(
 
         return {
 
-            "class":class_name,
+            "class":
+            class_name,
 
             "confidence":
             round(
@@ -392,18 +423,19 @@ async def predict(
 
 
 
-# ================= HISTORY =================
 
+
+# ================= HISTORY =================
 
 
 @app.get("/history")
 def history(
 
-    current_user=Depends(
+    current_user = Depends(
         get_current_user
     ),
 
-    db:Session=Depends(get_db)
+    db:Session = Depends(get_db)
 
 ):
 
@@ -422,31 +454,36 @@ def history(
 
 
 
-    result=[]
+    output=[]
 
 
 
-    for r in records:
+    for item in records:
 
 
-        result.append({
+        output.append({
 
-            "id":r.id,
+            "id":
+            item.id,
+
 
             "image_name":
-            r.image_name,
+            item.image_name,
+
 
             "predicted_class":
-            r.predicted_class,
+            item.predicted_class,
+
 
             "confidence":
-            r.confidence,
+            item.confidence,
+
 
             "created_at":
-            r.created_at
+            item.created_at
 
         })
 
 
 
-    return result
+    return output
