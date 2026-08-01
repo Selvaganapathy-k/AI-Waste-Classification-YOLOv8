@@ -14,9 +14,9 @@ ALGORITHM = "HS256"
 
 
 
-def hash_password(password):
+def hash_password(password: str):
 
-    # bcrypt supports max 72 bytes
+    # bcrypt maximum = 72 bytes
     password = password[:72]
 
     return pwd_context.hash(password)
@@ -24,14 +24,15 @@ def hash_password(password):
 
 
 def verify_password(
-    plain_password,
-    hashed_password
+    password: str,
+    hashed_password: str
 ):
 
-    plain_password = plain_password[:72]
+    # bcrypt maximum = 72 bytes
+    password = password[:72]
 
     return pwd_context.verify(
-        plain_password,
+        password,
         hashed_password
     )
 
