@@ -196,15 +196,12 @@ def register(
 
 
 
-@app.post("/login")
-def login(
-
+@app.post("/register")
+def register(
+    username:str,
     email:str,
-
     password:str,
-
-    db:Session = Depends(get_db)
-
+    db: Session = Depends(get_db)
 ):
 
 
