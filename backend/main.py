@@ -68,7 +68,7 @@ app.add_middleware(
 
     allow_origins=[
         "http://localhost:5173",
-        
+
     ],
 
     allow_credentials=True,
@@ -89,13 +89,21 @@ app.mount(
 )
 
 # Load YOLO
-
-model = YOLO(
-    "model/waste_classifier.pt"
-)
+model = None
 
 
-print("MODEL LOADED")
+@app.on_event("startup")
+def load_model():
+
+    global model
+
+    print("Loading YOLO model...")
+
+    model = YOLO(
+        "model/waste_classifier.pt"
+    )
+
+    print("MODEL LOADED")
 
 
 
