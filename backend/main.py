@@ -67,7 +67,8 @@ app.add_middleware(
     CORSMiddleware,
 
     allow_origins=[
-        "http://localhost:5173"
+        "http://localhost:5173",
+        
     ],
 
     allow_credentials=True,
@@ -164,9 +165,7 @@ def register(
     db.close()
 
 
-    return {
-        "message":"Registered successfully"
-    }
+   
 
 
 
@@ -335,60 +334,6 @@ async def predict(
         )
 
 
-@app.post("/register")
-def register(
-    username:str,
-    email:str,
-    password:str
-):
-
-    db = SessionLocal()
-
-
-    existing = db.query(User).filter(
-        User.email == email
-    ).first()
-
-
-
-    if existing:
-
-        db.close()
-
-        raise HTTPException(
-            400,
-            "Email already exists"
-        )
-
-
-
-    user = User(
-
-        username=username,
-
-        email=email,
-
-        password=password
-
-    )
-
-
-    db.add(user)
-
-    db.commit()
-
-    db.refresh(user)
-
-
-    db.close()
-
-
-    return {
-
-        "message":
-        "User registered successfully"
-
-    }
 
 
 # HISTORY
