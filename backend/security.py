@@ -1,11 +1,6 @@
 from passlib.context import CryptContext
 from jose import jwt
-from datetime import datetime,timedelta
-
-
-SECRET_KEY="ecovision_secret"
-
-ALGORITHM="HS256"
+from datetime import datetime, timedelta
 
 
 pwd_context = CryptContext(
@@ -14,36 +9,41 @@ pwd_context = CryptContext(
 )
 
 
+SECRET_KEY = "your-secret-key"
+ALGORITHM = "HS256"
+
+
 
 def hash_password(password):
+
+    # bcrypt supports max 72 bytes
+    password = password[:72]
 
     return pwd_context.hash(password)
 
 
 
 def verify_password(
-    password,
-    hashed
+    plain_password,
+    hashed_password
 ):
 
+    plain_password = plain_password[:72]
+
     return pwd_context.verify(
-        password,
-        hashed
+        plain_password,
+        hashed_password
     )
 
 
 
 def create_token(data):
 
-    payload=data.copy()
+    payload = data.copy()
 
-
-    payload["exp"] = (
-        datetime.utcnow()
-        +
-        timedelta(hours=24)
+    payload["exp"] = datetime.utcnow() + timedelta(
+        minutes=60
     )
-
 
     return jwt.encode(
         payload,
