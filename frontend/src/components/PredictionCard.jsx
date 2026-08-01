@@ -1,182 +1,152 @@
-import {
-    Recycle,
-    Leaf,
-    AlertTriangle
-} from "lucide-react";
+import { Recycle, Leaf, AlertTriangle } from "lucide-react";
+import { wasteInfo } from "../data/wasteInfo";
 
+function PredictionCard({ result }) {
+  if (!result) {
+    return (
+      <div className="prediction empty">
+        <h2>🤖 AI Prediction</h2>
+        <p>Upload image to analyse waste.</p>
+      </div>
+    );
+  }
 
-function PredictionCard({result}){
+  // Backend class
+  const rawClass = result.class || result.predicted_class || "";
 
+  // Remove spaces
+  const wasteClass = rawClass.trim();
 
-if(!result)
+  // Debug
+  console.log("Result :", result);
+  console.log("Waste Class :", wasteClass);
+  console.log("Waste Info :", wasteInfo[wasteClass]);
 
-return(
+  const info =
+    wasteInfo[wasteClass] || {
+      title: "Unknown Waste",
+      recommendation: "Follow your local waste disposal guidelines.",
+      steps: [],
+      impact: {
+        co2: "N/A",
+        energy: "N/A",
+        environment: "N/A",
+      },
+    };
 
-<div className="prediction empty">
+  const confidence =
+    result.confidence > 1
+      ? result.confidence
+      : result.confidence * 100;
 
-<h2>
-🤖 AI Prediction
-</h2>
+  function getIcon() {
+    if (wasteClass === "Hazardous")
+      return <AlertTriangle size={60} />;
 
-<p>
-Upload image to analyse waste
-</p>
+    if (wasteClass === "Organic")
+      return <Leaf size={60} />;
 
-</div>
+    return <Recycle size={60} />;
+  }
 
-);
+  function getColor() {
+    if (wasteClass === "Hazardous")
+      return "#ef4444";
 
+    if (wasteClass === "Organic")
+      return "#f97316";
 
+    return "#22c55e";
+  }
 
+  return (
+    <div className="prediction">
 
+      <h2>🤖 AI Analysis Complete</h2>
 
-function getIcon(){
+      <div className="prediction-result">
 
+        <div
+          className="result-icon"
+          style={{ color: getColor() }}
+        >
+          {getIcon()}
+        </div>
 
-if(result.predicted_class==="Hazardous")
+        <h1 style={{ color: getColor() }}>
+          {wasteClass}
+        </h1>
 
-return <AlertTriangle size={50}/>;
+      </div>
 
+      <div className="confidence-box">
 
-if(result.predicted_class==="Organic")
+        <p>Confidence</p>
 
-return <Leaf size={50}/>;
+        <div className="confidence-bar">
 
+          <div
+            style={{
+              width: `${confidence}%`,
+              background: getColor(),
+            }}
+          />
 
-return <Recycle size={50}/>;
+        </div>
 
+        <h3>{confidence.toFixed(2)}%</h3>
+
+      </div>
+
+      <div className="recommendation">
+
+        <h3>💡 AI Disposal Assistant</h3>
+
+        <h4>{info.title}</h4>
+
+        <p>{info.recommendation}</p>
+
+        <ul>
+
+          {info.steps.map((step, index) => (
+
+            <li key={index}>
+              ✅ {step}
+            </li>
+
+          ))}
+
+        </ul>
+
+      </div>
+
+      <div className="impact-card">
+
+        <h3>🌍 Environmental Impact</h3>
+
+        <div className="impact-grid">
+
+          <div className="impact-item">
+            <h4>🌱 CO₂ Impact</h4>
+            <p>{info.impact.co2}</p>
+          </div>
+
+          <div className="impact-item">
+            <h4>⚡ Energy</h4>
+            <p>{info.impact.energy}</p>
+          </div>
+
+          <div className="impact-item">
+            <h4>🌳 Environment</h4>
+            <p>{info.impact.environment}</p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
 }
-
-
-
-
-
-function recommendation(){
-
-
-if(result.predicted_class==="Hazardous")
-
-return "Dispose carefully in hazardous waste bin";
-
-
-if(result.predicted_class==="Organic")
-
-return "Use for composting";
-
-
-return "Place this waste in recycling bin";
-
-
-}
-
-
-
-
-
-return(
-
-<div className="prediction">
-
-
-<h2>
-🤖 AI Analysis Complete
-</h2>
-
-
-
-<div className="prediction-result">
-
-
-<div className="result-icon">
-
-{
-getIcon()
-}
-
-</div>
-
-
-
-<h1>
-
-{
-result.class
-}
-
-</h1>
-
-
-
-</div>
-
-
-
-
-
-<div className="confidence-box">
-
-
-<p>
-Confidence
-</p>
-
-
-<div className="confidence-bar">
-
-
-<div
-
-style={{
-width:
-`${result.confidence*100}%`
-}}
-
-/>
-
-
-</div>
-
-
-
-<h3>
-
-{
-(result.confidence).toFixed(2)
-}%
-
-</h3>
-
-
-</div>
-
-
-
-
-
-<div className="recommendation">
-
-
-<h3>
-💡 Recommendation
-</h3>
-
-
-<p>
-{
-recommendation()
-}
-</p>
-
-
-</div>
-
-
-
-</div>
-
-)
-
-}
-
 
 export default PredictionCard;
