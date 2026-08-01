@@ -50,7 +50,7 @@ return(
 
 <img
 
-src={`http://127.0.0.1:8000/uploads/${item.image_name}`}
+src={`https://ecovision-ai-backend-95u4.onrender.com/uploads/${item.image_name}`}
 
 alt="waste"
 

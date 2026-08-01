@@ -1,160 +1,78 @@
 import axios from "axios";
 
+// Render Backend URL
+const API_URL = "https://ecovision-ai-backend-95u4.onrender.com";
 
-const API_URL="http://127.0.0.1:8000";
+// ================= REGISTER =================
 
+export async function registerUser(username, email, password) {
+  const response = await axios.post(
+    `${API_URL}/register`,
+    null,
+    {
+      params: {
+        username,
+        email,
+        password,
+      },
+    }
+  );
 
-
-// REGISTER
-
-export async function registerUser(
-username,
-email,
-password
-){
-
-const response = await axios.post(
-
-`${API_URL}/register`,
-
-null,
-
-{
-params:{
-username,
-email,
-password
-}
+  return response.data;
 }
 
-);
+// ================= LOGIN =================
 
+export async function loginUser(email, password) {
+  const response = await axios.post(
+    `${API_URL}/login`,
+    null,
+    {
+      params: {
+        email,
+        password,
+      },
+    }
+  );
 
-return response.data;
-
+  return response.data;
 }
 
+// ================= PREDICT =================
 
+export async function predictWaste(image) {
+  const token = localStorage.getItem("token");
 
+  const formData = new FormData();
+  formData.append("file", image);
 
+  const response = await axios.post(
+    `${API_URL}/predict`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 
-// LOGIN
-
-export async function loginUser(
-email,
-password
-){
-
-
-const response = await axios.post(
-
-`${API_URL}/login`,
-
-null,
-
-{
-params:{
-email,
-password
-}
+  return response.data;
 }
 
-);
+// ================= HISTORY =================
 
+export async function getHistory() {
+  const token = localStorage.getItem("token");
 
-return response.data;
+  const response = await axios.get(
+    `${API_URL}/history`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-}
-
-
-
-
-
-// PREDICT
-
-export async function predictWaste(image){
-
-
-const token =
-localStorage.getItem("token");
-
-
-
-const formData=new FormData();
-
-
-formData.append(
-"file",
-image
-);
-
-
-
-const response = await axios.post(
-
-`${API_URL}/predict`,
-
-formData,
-
-{
-
-headers:{
-
-Authorization:
-`Bearer ${token}`,
-
-"Content-Type":
-"multipart/form-data"
-
-}
-
-}
-
-);
-
-
-
-return response.data;
-
-
-}
-
-
-
-
-
-
-// HISTORY
-
-
-export async function getHistory(){
-
-
-const token =
-localStorage.getItem("token");
-
-
-
-const response = await axios.get(
-
-`${API_URL}/history`,
-
-{
-
-headers:{
-
-Authorization:
-`Bearer ${token}`
-
-}
-
-}
-
-);
-
-
-
-return response.data;
-
-
+  return response.data;
 }
