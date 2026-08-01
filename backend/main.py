@@ -6,26 +6,27 @@ from fastapi import (
     HTTPException
 )
 
-
-from models import PredictionHistory
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from sqlalchemy.orm import Session
 
 from ultralytics import YOLO
+
+import os
+import shutil
 
 
 from database import (
     Base,
     engine,
-    SessionLocal
+    get_db
 )
-
 
 from models import (
     User,
     PredictionHistory
 )
-
 
 from security import (
     hash_password,
@@ -33,20 +34,11 @@ from security import (
     create_token
 )
 
-
 from auth import get_current_user
-from database import engine
-from models import Base
-
-
-Base.metadata.create_all(bind=engine)
-
-import shutil
-import os
 
 
 
-# create database
+# Create tables
 
 Base.metadata.create_all(
     bind=engine
@@ -61,42 +53,62 @@ app = FastAPI(
 
 
 # CORS
+
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=[
-        "http://localhost:5173",
-        "https://YOUR-PROJECT.vercel.app"
-    ],
+
+    "https://ai-waste-classification-yol-ov8.vercel.app",
+
+    "https://ecovision-ai-backend-95u4.onrender.com"
+
+],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"]
+
 )
 
-from fastapi.staticfiles import StaticFiles
+
+
+# Upload folder
+
+os.makedirs(
+    "uploads",
+    exist_ok=True
+)
+
 
 
 app.mount(
+
     "/uploads",
-    StaticFiles(directory="uploads"),
+
+    StaticFiles(
+        directory="uploads"
+    ),
+
     name="uploads"
+
 )
 
-# Load YOLO
-model = None
 
 
-@app.on_event("startup")
-def load_model():
+# Load YOLO Model
 
-    global model
+model = YOLO(
+    "model/waste_classifier.pt"
+)
 
-    print("Loading YOLO model...")
 
-    model = YOLO(
-        "model/waste_classifier.pt"
-    )
+print("MODEL LOADED")
 
-    print("MODEL LOADED")
+
 
 
 
@@ -111,7 +123,8 @@ def home():
 
 
 
-# REGISTER
+# ================= REGISTER =================
+
 
 @app.post("/register")
 def register(
@@ -120,34 +133,34 @@ def register(
 
     email:str,
 
-    password:str
+    password:str,
+
+    db:Session = Depends(get_db)
 
 ):
 
-    db=SessionLocal()
 
-
-
-    check=db.query(
+    existing = db.query(
         User
     ).filter(
-        User.email==email
+        User.email == email
     ).first()
 
 
 
-    if check:
-
-        db.close()
+    if existing:
 
         raise HTTPException(
-            400,
-            "Email already exists"
+
+            status_code=400,
+
+            detail="Email already exists"
+
         )
 
 
 
-    user=User(
+    user = User(
 
         username=username,
 
@@ -163,66 +176,14 @@ def register(
 
     db.commit()
 
-    db.close()
+    db.refresh(user)
 
-
-   
-
-
-
-@app.post("/login")
-def login(
-    email:str,
-    password:str
-):
-
-    db = SessionLocal()
-
-
-    user = db.query(User).filter(
-        User.email == email
-    ).first()
-
-
-    db.close()
-
-
-
-    if not user:
-
-        raise HTTPException(
-            404,
-            "User not found"
-        )
-
-
-
-    if not verify_password(
-        password,
-        user.password
-    ):
-
-        raise HTTPException(
-            401,
-            "Wrong password"
-        )
-
-
-
-    token = create_token(
-        {
-            "id": user.id
-        }
-    )
 
 
     return {
 
-        "token": token,
-
-        "username": user.username,
-
-        "email": user.email
+        "message":
+        "Registered successfully"
 
     }
 
@@ -230,7 +191,89 @@ def login(
 
 
 
-# PREDICT
+
+# ================= LOGIN =================
+
+
+
+@app.post("/login")
+def login(
+
+    email:str,
+
+    password:str,
+
+    db:Session = Depends(get_db)
+
+):
+
+
+    user = db.query(
+        User
+    ).filter(
+        User.email == email
+    ).first()
+
+
+
+    if not user:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="User not found"
+
+        )
+
+
+
+    if not verify_password(
+
+        password,
+
+        user.password
+
+    ):
+
+        raise HTTPException(
+
+            status_code=401,
+
+            detail="Wrong password"
+
+        )
+
+
+
+    token = create_token(
+
+        {
+            "id":user.id
+        }
+
+    )
+
+
+
+    return {
+
+        "token":token,
+
+        "username":user.username,
+
+        "email":user.email
+
+    }
+
+
+
+
+
+
+
+# ================= PREDICT =================
+
 
 @app.post("/predict")
 async def predict(
@@ -239,7 +282,9 @@ async def predict(
 
     current_user=Depends(
         get_current_user
-    )
+    ),
+
+    db:Session=Depends(get_db)
 
 ):
 
@@ -247,13 +292,11 @@ async def predict(
     try:
 
 
-        os.makedirs(
-            "uploads",
-            exist_ok=True
+        path = (
+            "uploads/"
+            +
+            file.filename
         )
-
-
-        path=f"uploads/{file.filename}"
 
 
 
@@ -263,37 +306,42 @@ async def predict(
         ) as buffer:
 
             shutil.copyfileobj(
+
                 file.file,
+
                 buffer
+
             )
 
 
 
-        result=model.predict(
+        result = model.predict(
+
             path,
+
             imgsz=320,
+
             verbose=False
+
         )[0]
 
 
 
-        class_id=result.probs.top1
+        class_id = result.probs.top1
 
 
-        class_name=result.names[class_id]
+        class_name = result.names[class_id]
 
 
-        confidence=float(
+        confidence = float(
+
             result.probs.top1conf
+
         )
 
 
 
-        db=SessionLocal()
-
-
-
-        history=PredictionHistory(
+        history = PredictionHistory(
 
             user_id=current_user.id,
 
@@ -306,11 +354,10 @@ async def predict(
         )
 
 
+
         db.add(history)
 
         db.commit()
-
-        db.close()
 
 
 
@@ -319,7 +366,10 @@ async def predict(
             "class":class_name,
 
             "confidence":
-            round(confidence*100,2)
+            round(
+                confidence*100,
+                2
+            )
 
         }
 
@@ -327,80 +377,79 @@ async def predict(
 
     except Exception as e:
 
-        print("PREDICT ERROR:",e)
+
+        print(e)
+
 
         raise HTTPException(
-            500,
-            str(e)
+
+            status_code=500,
+
+            detail=str(e)
+
         )
 
 
 
 
-# HISTORY
+
+
+
+# ================= HISTORY =================
+
+
 
 @app.get("/history")
 def history(
 
     current_user=Depends(
         get_current_user
-    )
+    ),
+
+    db:Session=Depends(get_db)
 
 ):
 
 
-    try:
+    records = db.query(
 
+        PredictionHistory
 
-        db=SessionLocal()
+    ).filter(
 
+        PredictionHistory.user_id
+        ==
+        current_user.id
 
-
-        records=db.query(
-            PredictionHistory
-        ).filter(
-            PredictionHistory.user_id==
-            current_user.id
-        ).all()
-
-
-
-        result=[]
-
-
-        for r in records:
-
-            result.append({
-
-                "id":r.id,
-
-                "image_name":r.image_name,
-
-                "predicted_class":
-                r.predicted_class,
-
-                "confidence":
-                r.confidence,
-
-                "created_at":
-                r.created_at
-
-            })
+    ).all()
 
 
 
-        db.close()
-
-
-        return result
+    result=[]
 
 
 
-    except Exception as e:
+    for r in records:
 
-        print("HISTORY ERROR:",e)
 
-        raise HTTPException(
-            500,
-            str(e)
-        )
+        result.append({
+
+            "id":r.id,
+
+            "image_name":
+            r.image_name,
+
+            "predicted_class":
+            r.predicted_class,
+
+            "confidence":
+            r.confidence,
+
+            "created_at":
+            r.created_at
+
+        })
+
+
+
+    return result

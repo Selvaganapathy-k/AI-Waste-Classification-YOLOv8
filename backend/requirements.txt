@@ -12,3 +12,4 @@ pillow
 opencv-python-headless
 numpy
 bcrypt
+psycopg2-binary
